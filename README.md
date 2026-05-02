@@ -2,34 +2,36 @@
 
 Sistem Absensi Siswa berbasis Web dengan teknologi GPS & Radius untuk SMAN 1 Pelabuhan Ratu.
 
+
 ## Fitur Utama
 - Absensi Datang & Pulang dengan GPS + Radius
 - Deteksi Kesiangan & Alpa Otomatis
-- Pengajuan Izin/Sakit dengan Bukti
+- Pengajuan Izin/Sakit dengan Bukti Foto
 - Laporan Bulanan Lengkap
 - Proses Otomatis ALPA
 - Mode PWA (bisa diinstal di HP)
-- Responsive Design
+
+## Donasi Pengembangan
+
+Terima kasih atas dukungan Anda!
+
+![QR Code Donasi](qrcode-donas.png)
+
+**Scan QR Code di atas untuk donasi**
+
+---
+
+## Cara Install
+1. Clone repository ini
+2. Import database (`inject.sql`)
+3. Konfigurasi `config.php`
+4. Upload ke hosting
 
 ## Teknologi
 - PHP 8 + MySQL
-- Bootstrap 5
-- GPS + Geolocation
+- Bootstrap 5 + Font Awesome
+- GPS Geolocation
 - Service Worker (Auto Update)
-
-## Cara Install
-1. Clone repo ini
-2. Import database (`inject.sql`)
-3. Setting `config.php`
-4. Upload ke hosting
-5. Akses `index.php`
-
-## Screenshot
-
-*(Tambahkan screenshot di sini nanti)*
-
-## Kontak
-- WA: 0838 1811 8688
 
 ---
 
