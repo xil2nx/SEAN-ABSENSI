@@ -1,0 +1,8 @@
+RewriteEngine On
+RewriteBase /
+
+# Izinkan akses ke folder admin
+RewriteRule ^admin/ - [L]
+
+# Jika ada routing framework, matikan sementara
+# RewriteRule ^(.*)$ index.php [QSA,L]

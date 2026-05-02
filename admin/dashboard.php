@@ -1,0 +1,215 @@
+<?php
+require_once '../config.php';
+require_once '../functions.php';
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// Amankan getSettings
+$settings_raw = getSettings($pdo);
+$settings = is_array($settings_raw) ? $settings_raw : ['nama_lembaga' => 'SMAN 1 Pelabuhan Ratu', 'logo' => ''];
+$today = date('Y-m-d');
+
+// Statistik
+$total_siswa = $pdo->query("SELECT COUNT(*) FROM siswa")->fetchColumn();
+
+$hadir_hari_ini = $pdo->prepare("SELECT COUNT(*) FROM absensi WHERE tanggal = ? AND status = 'Hadir'");
+$hadir_hari_ini->execute([$today]);
+$hadir_hari_ini = $hadir_hari_ini->fetchColumn();
+
+$terlambat_hari_ini = $pdo->prepare("SELECT COUNT(*) FROM absensi WHERE tanggal = ? AND status = 'Terlambat'");
+$terlambat_hari_ini->execute([$today]);
+$terlambat_hari_ini = $terlambat_hari_ini->fetchColumn();
+
+$izin_sakit = $pdo->prepare("SELECT COUNT(*) FROM absensi WHERE tanggal = ? AND status IN ('Izin', 'Sakit')");
+$izin_sakit->execute([$today]);
+$izin_sakit = $izin_sakit->fetchColumn();
+
+$alpa_hari_ini = $pdo->prepare("SELECT COUNT(*) FROM absensi WHERE tanggal = ? AND status = 'Alpa'");
+$alpa_hari_ini->execute([$today]);
+$alpa_hari_ini = $alpa_hari_ini->fetchColumn();
+
+$total_absen_hari_ini = $pdo->prepare("SELECT COUNT(*) FROM absensi WHERE tanggal = ?");
+$total_absen_hari_ini->execute([$today]);
+$total_absen_hari_ini = $total_absen_hari_ini->fetchColumn();
+
+$pending_izin = $pdo->query("SELECT COUNT(*) FROM pengajuan WHERE status = 'Pending'")->fetchColumn();
+
+$siswa_with_device = $pdo->query("SELECT COUNT(*) FROM siswa WHERE device_id IS NOT NULL AND device_id != ''")->fetchColumn();
+
+$belum_pulang = $pdo->prepare("SELECT COUNT(*) FROM absensi WHERE tanggal = ? AND jam_datang IS NOT NULL AND jam_pulang IS NULL");
+$belum_pulang->execute([$today]);
+$belum_pulang = $belum_pulang->fetchColumn();
+?>
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            padding: 25px 0;
+            border-radius: 0 0 20px 20px;
+        }
+        .logo-img { max-height: 80px; border-radius: 12px; background: white; padding: 8px; }
+        .stat-card {
+            border-radius: 15px;
+            transition: all 0.3s;
+            height: 100%;
+            text-decoration: none;
+            color: inherit;
+        }
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="bg-light">
+<!-- HEADER -->
+<div class="header text-center">
+    <div class="container">
+        <?php if(!empty($settings['logo'])): ?>
+            <img src="../assist/<?= htmlspecialchars($settings['logo']) ?>" alt="Logo" class="logo-img mb-3">
+        <?php endif; ?>
+        <h4 class="mb-1"><?= htmlspecialchars($settings['nama_lembaga'] ?? 'SMAN 1 Pelabuhan Ratu') ?></h4>
+        <h5>Admin Dashboard</h5>
+    </div>
+</div>
+<div class="container py-4">
+    <div class="text-end mb-3">
+        <a href="logout.php" class="btn btn-outline-danger">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+    <!-- Statistik Cards -->
+    <div class="row g-3">
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="siswa.php" class="stat-card card bg-primary text-white text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <h3 class="mb-0"><?= number_format($total_siswa) ?></h3>
+                    <small>Total Siswa</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="hadir.php" class="stat-card card bg-success text-white text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h3 class="mb-0"><?= number_format($hadir_hari_ini) ?></h3>
+                    <small>Hadir Hari Ini</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="terlambat.php" class="stat-card card bg-warning text-dark text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3 class="mb-0"><?= number_format($terlambat_hari_ini) ?></h3>
+                    <small>Terlambat</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="izinsakit.php" class="stat-card card bg-info text-white text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-medical fa-2x mb-2"></i>
+                    <h3 class="mb-0"><?= number_format($izin_sakit) ?></h3>
+                    <small>Izin / Sakit</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="alpa.php" class="stat-card card bg-danger text-white text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-times-circle fa-2x mb-2"></i>
+                    <h3 class="mb-0"><?= number_format($alpa_hari_ini) ?></h3>
+                    <small>Alpa Hari Ini</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="pengajuan.php" class="stat-card card bg-warning text-dark text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3 class="mb-0"><?= number_format($pending_izin) ?></h3>
+                    <small>Pending Izin</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="absensi.php?filter=semua&tanggal=<?= $today ?>" class="stat-card card bg-secondary text-white text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-list-check fa-2x mb-2"></i>
+                    <h3 class="mb-0"><?= number_format($total_absen_hari_ini) ?></h3>
+                    <small>Total Absen Hari Ini</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="absenpulang.php" class="stat-card card bg-danger text-white text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-sign-out-alt fa-2x mb-2"></i>
+                    <h3 class="mb-0"><?= number_format($belum_pulang) ?></h3>
+                    <small>Belum Absen Pulang</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="deviceid.php" class="stat-card card bg-dark text-white text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-mobile-alt fa-2x mb-2"></i>
+                    <h3 class="mb-0"><?= number_format($siswa_with_device) ?></h3>
+                    <small>Siswa Sudah Punya Device ID</small>
+                </div>
+            </a>
+        </div>
+    </div>
+    <!-- Menu Utama -->
+    <div class="row g-3 mt-5">
+        <div class="col-md-4">
+            <a href="siswa.php" class="btn btn-outline-primary w-100 py-4">
+                <i class="fas fa-user-graduate fa-2x d-block mb-2"></i> Kelola Siswa
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="kelas.php" class="btn btn-outline-info w-100 py-4">
+                <i class="fas fa-school fa-2x d-block mb-2"></i> Kelola Kelas
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="absensi.php" class="btn btn-outline-success w-100 py-4">
+                <i class="fas fa-list-check fa-2x d-block mb-2"></i> Laporan Absensi
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="pengajuan.php" class="btn btn-warning w-100 py-4 text-dark position-relative">
+                <i class="fas fa-envelope fa-2x d-block mb-2"></i> Pengajuan Izin / Sakit
+                <?php if($pending_izin > 0): ?>
+                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle"><?= $pending_izin ?></span>
+                <?php endif; ?>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="setting.php" class="btn btn-outline-secondary w-100 py-4">
+                <i class="fas fa-cog fa-2x d-block mb-2"></i> Pengaturan
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="proses_otomatis.php" class="btn btn-outline-danger w-100 py-4">
+                <i class="fas fa-cogs fa-2x d-block mb-2"></i> Proses Otomatis ALPA
+            </a>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
