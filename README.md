@@ -2,8 +2,6 @@
 
 Sistem Absensi Siswa berbasis Web dengan teknologi GPS & Radius untuk SMAN 1 Pelabuhan Ratu.
 
-![SEAN](https://via.placeholder.com/800x400/007bff/ffffff?text=SEAN+V.01)
-
 ## Fitur Utama
 - Absensi Datang & Pulang dengan GPS + Radius
 - Deteksi Kesiangan & Alpa Otomatis
